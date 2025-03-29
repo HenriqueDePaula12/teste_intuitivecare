@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Busca de Operadoras de Saúde</title>
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <!-- Axios CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <!-- Font Awesome para ícones -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div id="app">
+    <div class="container">
+      <h1 class="text-center">
+        <i class="fas fa-heartbeat"></i> Busca de Operadoras de Saúde
+      </h1>
+      
+      <div class="search-box">
+        <input
+          type="text"
+          v-model="searchTerm"
+          placeholder="Buscar por razão social, nome fantasia ou CNPJ..."
+          @keyup.enter="searchOperadoras"
+          class="search-input"
+        />
+        <button @click="searchOperadoras" class="btn btn-primary">
+          <i class="fas fa-search"></i> Buscar
+        </button>
+      </div>
+      
+      <div v-if="loading" class="loading-container">
+        <div class="spinner"></div>
+        <p>Carregando operadoras...</p>
+      </div>
+      
+      <div v-if="error" class="error-container">
+        <div class="error-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <p>{{ error }}</p>
+        <button @click="searchOperadoras" class="btn btn-outline">
+          <i class="fas fa-sync-alt"></i> Tentar novamente
+        </button>
+      </div>
+      
+      <div v-if="!loading && searchPerformed && operadoras.length === 0" class="empty-state">
+        <p>Nenhuma operadora encontrada para "{{ searchTerm }}"</p>
+        <button @click="resetSearch" class="btn btn-primary">
+          <i class="fas fa-times"></i> Limpar busca
+        </button>
+      </div>
+      
+      <div v-if="operadoras.length > 0">
+        <div class="view-toggle">
+          <button 
+            @click="viewMode = 'table'" 
+            :class="{ active: viewMode === 'table' }" 
+            class="btn btn-outline"
+          >
+            <i class="fas fa-table"></i> Tabela
+          </button>
+          <button 
+            @click="viewMode = 'cards'" 
+            :class="{ active: viewMode === 'cards' }" 
+            class="btn btn-outline"
+          >
+            <i class="fas fa-th-large"></i> Cards
+          </button>
+        </div>
+        
+        <div v-if="viewMode === 'table'">
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Razão Social</th>
+                  <th>Nome Fantasia</th>
+                  <th>CNPJ</th>
+                  <th>Registro ANS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="operadora in operadoras" :key="operadora.id">
+                  <td>{{ operadora.razao_social }}</td>
+                  <td>{{ operadora.nome_fantasia }}</td>
+                  <td>{{ formatCNPJ(operadora.cnpj) }}</td>
+                  <td>{{ operadora.registro_ans }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div v-if="viewMode === 'cards'" class="cards-container">
+          <div class="card" v-for="operadora in operadoras" :key="operadora.id">
+            <div class="card-header">
+              <h3>{{ operadora.razao_social }}</h3>
+              <span class="badge">{{ operadora.registro_ans }}</span>
+            </div>
+            <div class="card-body">
+              <p><strong><i class="fas fa-building"></i> Nome Fantasia:</strong> {{ operadora.nome_fantasia }}</p>
+              <p><strong><i class="fas fa-id-card"></i> CNPJ:</strong> {{ formatCNPJ(operadora.cnpj) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { createApp, ref } = Vue;
+    
+    createApp({
+      setup() {
+        const operadoras = ref([]);
+        const searchTerm = ref('');
+        const loading = ref(false);
+        const error = ref(null);
+        const searchPerformed = ref(false);
+        const viewMode = ref('table');
+        
+        // Configuração do Axios
+        axios.defaults.baseURL = 'http://localhost:5000';
+        
+        const searchOperadoras = async () => {
+          if (!searchTerm.value.trim()) return;
+          
+          loading.value = true;
+          error.value = null;
+          searchPerformed.value = true;
+          
+          try {
+            const response = await axios.get('/api/buscar', {
+              params: { q: searchTerm.value }
+            });
+            operadoras.value = response.data;
+          } catch (err) {
+            error.value = 'Erro ao buscar operadoras: ' + (err.response?.data?.error || err.message);
+            console.error(err);
+          } finally {
+            loading.value = false;
+          }
+        };
+        
+        const resetSearch = () => {
+          searchTerm.value = '';
+          operadoras.value = [];
+          searchPerformed.value = false;
+        };
+        
+        const formatCNPJ = (cnpj) => {
+          if (!cnpj) return '';
+          return cnpj.replace(
+            /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
+            '$1.$2.$3/$4-$5'
+          );
+        };
+        
+        return {
+          operadoras,
+          searchTerm,
+          loading,
+          error,
+          searchPerformed,
+          viewMode,
+          searchOperadoras,
+          resetSearch,
+          formatCNPJ
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
