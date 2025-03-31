@@ -54,4 +54,4 @@ class PDFProcessor:
 #        processor.salvar_csv()
 #        processor.zipar_arquivo()
 #    else:
-#        print("❌ Falha ao extrair dados do PDF")
+#        print("Falha ao extrair dados do PDF")

@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 class PostgresDataImporter:
     def __init__(self):
         load_dotenv()
-        self.pasta = os.path.join('teste_bd', 'arquivos')  # Caminho corrigido
+        self.pasta = os.path.join('teste_bd', 'arquivos')
         self.CSV_FILES = [
             os.path.join(self.pasta, '1T2023.csv'),
             os.path.join(self.pasta, '2T2023.csv'),

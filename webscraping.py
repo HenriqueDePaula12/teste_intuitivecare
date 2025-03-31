@@ -63,12 +63,11 @@ class WebScraper:
             try:
                 response = requests.get(url, stream=True)
                 if response.status_code == 200:
-                    # Define o caminho completo com a pasta pdfs
                     filepath = os.path.join("pdfs", filename)
                     with open(filepath, "wb") as f:
                         for chunk in response.iter_content(1024):
                             f.write(chunk)
-                    self.downloaded_files.append(filepath)  # Armazena o caminho completo
+                    self.downloaded_files.append(filepath)
                     print(f"Download concluído: {filepath}")
                 else:
                     print(
@@ -83,11 +82,9 @@ class WebScraper:
             return False
 
         try:
-            # Define o caminho do ZIP dentro da pasta pdfs
             zip_filename = os.path.join("pdfs", "Anexos.zip")
             with zipfile.ZipFile(zip_filename, "w", zipfile.ZIP_DEFLATED) as zipf:
                 for file in self.downloaded_files:
-                    # Adiciona o arquivo ao ZIP usando o nome base (sem o caminho da pasta)
                     zipf.write(file, os.path.basename(file))
 
             print(f"Arquivo ZIP criado: {zip_filename}")

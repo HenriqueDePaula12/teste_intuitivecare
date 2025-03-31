@@ -11,7 +11,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = Flask(__name__)
+template_dir = os.path.abspath('../frontend/templates')
+
+app = Flask(__name__, template_folder=template_dir)
 CORS(app)
 
 conexao = PostgresDataImporter()
